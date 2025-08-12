@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Weather Predictor</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(to right, #0f2027, #203a43, #2c5364);
+            color: #fff;
+            padding: 40px;
+            text-align: center;
+        }
+        .container {
+            background: rgba(255, 255, 255, 0.1);
+            padding: 30px;
+            border-radius: 20px;
+            max-width: 450px;
+            margin: auto;
+            box-shadow: 0 0 15px rgba(0, 0, 0, 0.3);
+        }
+        h1 {
+            margin-bottom: 30px;
+            font-size: 32px;
+        }
+        input, button {
+            width: 90%;
+            padding: 12px;
+            margin: 10px 0;
+            border-radius: 8px;
+            border: none;
+            font-size: 16px;
+        }
+        input {
+            background-color: #fff;
+            color: #000;
+        }
+        button {
+            background-color: #28a745;
+            color: white;
+            font-weight: bold;
+            cursor: pointer;
+        }
+        .result {
+            margin-top: 20px;
+            background-color: #ffffff22;
+            padding: 20px;
+            border-radius: 10px;
+        }
+        .result p {
+            margin: 6px 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Weather Predictor 🌦️</h1>
+        <form method="POST" action="/predict">
+            <input type="text" name="location" placeholder="Enter Location" required>
+            <input type="number" name="temperature" placeholder="Temperature (°C)" step="0.1" required>
+            <input type="number" name="humidity" placeholder="Humidity (%)" step="0.1" required>
+            <input type="number" name="wind_speed" placeholder="Wind Speed (m/s)" step="0.1" required>
+            <button type="submit">Predict Weather</button>
+        </form>
+
+        {% if prediction_result %}
+        <div class="result">
+            <h2>Prediction for {{ location }}</h2>
+            <p><strong>Temperature:</strong> {{ temperature }} °C</p>
+            <p><strong>Humidity:</strong> {{ humidity }}%</p>
+            <p><strong>Wind Speed:</strong> {{ wind_speed }} m/s</p>
+            <p><strong>Predicted Condition:</strong> {{ prediction_result }}</p>
+        </div>
+        {% endif %}
+    </div>
+</body>
+</html>

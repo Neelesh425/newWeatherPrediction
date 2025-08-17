@@ -1,78 +1,232 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" class="no-js">
 <head>
-    <meta charset="UTF-8">
-    <title>Weather Predictor</title>
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <style>
-        body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background: linear-gradient(to right, #0f2027, #203a43, #2c5364);
-            color: #fff;
-            padding: 40px;
-            text-align: center;
-        }
-        .container {
-            background: rgba(255, 255, 255, 0.1);
-            padding: 30px;
-            border-radius: 20px;
-            max-width: 450px;
-            margin: auto;
-            box-shadow: 0 0 15px rgba(0, 0, 0, 0.3);
-        }
-        h1 {
-            margin-bottom: 30px;
-            font-size: 32px;
-        }
-        input, button {
-            width: 90%;
-            padding: 12px;
-            margin: 10px 0;
-            border-radius: 8px;
-            border: none;
-            font-size: 16px;
-        }
-        input {
-            background-color: #fff;
-            color: #000;
-        }
-        button {
-            background-color: #28a745;
-            color: white;
-            font-weight: bold;
-            cursor: pointer;
-        }
-        .result {
-            margin-top: 20px;
-            background-color: #ffffff22;
-            padding: 20px;
-            border-radius: 10px;
-        }
-        .result p {
-            margin: 6px 0;
-        }
-    </style>
-</head>
-<body>
-    <div class="container">
-        <h1>Weather Predictor 🌦️</h1>
-        <form method="POST" action="/predict">
-            <input type="text" name="location" placeholder="Enter Location" required>
-            <input type="number" name="temperature" placeholder="Temperature (°C)" step="0.1" required>
-            <input type="number" name="humidity" placeholder="Humidity (%)" step="0.1" required>
-            <input type="number" name="wind_speed" placeholder="Wind Speed (m/s)" step="0.1" required>
-            <button type="submit">Predict Weather</button>
-        </form>
+  <meta charset="UTF-8" />
+  <title>Weather Predictor</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <style>
+    :root{
+      --bg1:#0f2027; --bg2:#203a43; --bg3:#2c5364;
+      --card: rgba(255,255,255,0.1);
+      --muted: #ffffffcc;
+      --accent:#28a745; --accent-soft:#28a74522;
+      --danger:#d9534f; --warning:#f0ad4e; --info:#17a2b8;
+      --ok:#2ecc71; --text:#fff; --dark:#0b141a;
+    }
+    *{ box-sizing: border-box; }
+    body{
+      margin:0; padding:40px 20px; color:var(--text);
+      font-family: system-ui, -apple-system, Segoe UI, Roboto, Ubuntu, Cantarell, "Helvetica Neue", Arial, "Noto Sans", "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol";
+      background: linear-gradient(120deg, var(--bg1), var(--bg2), var(--bg3));
+      min-height:100vh;
+      transition: background 0.8s ease;
+    }
+    /* Dynamic backgrounds by predicted class */
+    body.sunny{ background: linear-gradient(120deg, #ffb347, #ffcc33); }
+    body.cloudy{ background: linear-gradient(120deg, #2c3e50, #4b79a1); }
+    body.rainy{ background: linear-gradient(120deg, #0f2027, #203a43, #2c5364); }
+    body.unknown{ background: linear-gradient(120deg, #141e30, #243b55); }
 
-        {% if prediction_result %}
-        <div class="result">
-            <h2>Prediction for {{ location }}</h2>
-            <p><strong>Temperature:</strong> {{ temperature }} °C</p>
-            <p><strong>Humidity:</strong> {{ humidity }}%</p>
-            <p><strong>Wind Speed:</strong> {{ wind_speed }} m/s</p>
-            <p><strong>Predicted Condition:</strong> {{ prediction_result }}</p>
+    .container{
+      max-width: 900px; margin: 0 auto; display:grid; gap:20px;
+      grid-template-columns: 1.1fr 0.9fr;
+    }
+    @media (max-width: 900px){ .container{ grid-template-columns: 1fr; } }
+
+    .card{
+      background: var(--card); border-radius: 18px; padding: 24px;
+      box-shadow: 0 8px 24px rgba(0,0,0,0.25); backdrop-filter: blur(8px);
+    }
+    h1{ margin: 0 0 16px; font-size: 28px; letter-spacing: 0.3px; }
+    p.lead{ margin-top:0; color:var(--muted); }
+
+    form input, form button{
+      width:100%; padding:12px 14px; margin:10px 0;
+      border-radius:10px; border: 1px solid transparent; font-size:16px;
+    }
+    form input{ background:#fff; color:#000; }
+    form button{
+      background: var(--accent); color:#fff; font-weight:700; cursor:pointer;
+      transition: transform .08s ease, box-shadow .2s ease;
+      box-shadow: 0 6px 18px var(--accent-soft);
+    }
+    form button:hover{ transform: translateY(-1px); }
+
+    .result{ margin-top: 8px; }
+    .result-header{
+      display:flex; align-items:center; gap:12px; margin-bottom:10px;
+    }
+    .result-icon{
+      width:48px; height:48px; display:grid; place-items:center;
+      background: rgba(255,255,255,0.15); border-radius:12px; font-size:26px;
+    }
+    .big{
+      font-size:32px; font-weight:800; line-height:1.2; margin:0;
+    }
+    .muted{ color: var(--muted); font-size:14px; }
+
+    .bar{ height: 10px; border-radius:8px; background: rgba(255,255,255,0.2); overflow:hidden; }
+    .bar > div{ height:100%; background: #fff; width:0; transition: width 0.8s ease; }
+
+    .grid{
+      display:grid; grid-template-columns: repeat(3, 1fr); gap:12px; margin-top:12px;
+    }
+    .metric{
+      background: rgba(255,255,255,0.12); border-radius:12px; padding:12px;
+      text-align:center;
+    }
+    .metric .label{ font-size:12px; color:var(--muted); }
+    .metric .value{ font-size:18px; font-weight:700; margin-top:4px; }
+
+    table{
+      width:100%; border-collapse: collapse;
+      color:#fff; font-size:14px; margin-top:10px;
+    }
+    table th, table td{
+      padding:10px 8px; border-bottom: 1px solid rgba(255,255,255,0.15);
+      text-align:left; white-space: nowrap;
+    }
+    table th{ color: var(--muted); font-weight:600; }
+    table td:last-child{ font-weight:700; }
+    .error{
+      background:#ff4d4f; color:#fff; padding:10px 12px; border-radius:10px; margin-top:10px;
+    }
+
+    .section-title{ font-weight:700; margin: 0 0 8px; letter-spacing: .3px; }
+    .subtle{ color: var(--muted); margin-top:0; }
+  </style>
+</head>
+{% set bg = (prediction_result|lower if prediction_result else 'unknown') %}
+<body class="{{ bg }}">
+  <div class="container">
+    <!-- LEFT: Form + Result -->
+    <div class="card">
+      <h1>Weather Predictor 🌦️</h1>
+      <p class="lead">Enter conditions to predict the likely weather. You’ll also see model confidence and a quick “feels like” estimate.</p>
+
+      <form method="POST" action="/predict" novalidate>
+        <input type="text" name="location" placeholder="Enter Location (e.g., Delhi)" required />
+        <input type="number" name="temperature" placeholder="Temperature (°C)" step="0.1" required />
+        <input type="number" name="humidity" placeholder="Humidity (%)" step="0.1" required />
+        <input type="number" name="wind_speed" placeholder="Wind Speed (m/s)" step="0.1" required />
+        <button type="submit">Predict Weather</button>
+      </form>
+
+      {% if error %}
+        <div class="error">Error: {{ error }}</div>
+      {% endif %}
+
+      {% if prediction_result %}
+      <div class="result">
+        <div class="result-header">
+          <div class="result-icon">
+            {% set icon =
+              '☀️' if prediction_result|lower == 'sunny' else
+              '🌧️' if prediction_result|lower == 'rainy' else
+              '☁️'
+            %}
+            <span aria-hidden="true">{{ icon }}</span>
+          </div>
+          <div>
+            <p class="big">{{ prediction_result }}</p>
+            <p class="muted">
+              {{ location }} · Confidence:
+              {% if probs %}{{ "%.1f"|format(probs[0][1]) }}%{% else %}—{% endif %}
+            </p>
+          </div>
+        </div>
+
+        <div class="grid">
+          <div class="metric">
+            <div class="label">Temperature</div>
+            <div class="value">{{ "%.1f"|format(temperature) }} °C</div>
+          </div>
+          <div class="metric">
+            <div class="label">Humidity</div>
+            <div class="value">{{ "%.1f"|format(humidity) }} %</div>
+          </div>
+          <div class="metric">
+            <div class="label">Wind Speed</div>
+            <div class="value">{{ "%.1f"|format(wind_speed) }} m/s</div>
+          </div>
+        </div>
+
+        <div class="metric" style="margin-top:12px;">
+          <div class="label">Feels Like</div>
+          <div class="value">{{ "%.1f"|format(feels_like) }} °C</div>
+        </div>
+
+        {% if probs %}
+        <div style="margin-top:16px;">
+          <div class="section-title">Model Confidence</div>
+          {% for cls, pct in probs %}
+            <div style="display:flex; justify-content:space-between; font-size:14px;">
+              <span>{{ cls }}</span><span>{{ "%.1f"|format(pct) }}%</span>
+            </div>
+            <div class="bar" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="{{ pct|round(1) }}">
+              <div style="width: {{ pct }}%;"></div>
+            </div>
+          {% endfor %}
         </div>
         {% endif %}
+      </div>
+      {% endif %}
     </div>
+
+    <!-- RIGHT: History -->
+    <div class="card">
+      <h2 class="section-title">Recent Predictions</h2>
+      <p class="subtle">Last 5 predictions this session.</p>
+      {% if history and history|length > 0 %}
+      <div style="overflow:auto;">
+        <table>
+          <thead>
+            <tr>
+              <th>Time</th>
+              <th>Location</th>
+              <th>Temp (°C)</th>
+              <th>Hum (%)</th>
+              <th>Wind (m/s)</th>
+              <th>Predicted</th>
+              <th>Conf</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for h in history %}
+            <tr>
+              <td>{{ h.time }}</td>
+              <td>{{ h.location }}</td>
+              <td>{{ h.temperature }}</td>
+              <td>{{ h.humidity }}</td>
+              <td>{{ h.wind_speed }}</td>
+              <td>{{ h.prediction }}</td>
+              <td>{{ "%.1f"|format(h.confidence) }}%</td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+      {% else %}
+        <p class="muted">No predictions yet. Make one from the form.</p>
+      {% endif %}
+    </div>
+  </div>
+
+  <script>
+    // Optional: auto-fill location with browser geolocation coordinates (no reverse geocoding).
+    // This keeps everything API-free.
+    (function(){
+      const locInput = document.querySelector('input[name="location"]');
+      if (!locInput) return;
+      if ("geolocation" in navigator) {
+        navigator.geolocation.getCurrentPosition(function(pos){
+          const { latitude, longitude } = pos.coords || {};
+          if (latitude && longitude && !locInput.value) {
+            locInput.placeholder = `Detected: ${latitude.toFixed(3)}, ${longitude.toFixed(3)}`;
+          }
+        });
+      }
+    })();
+  </script>
 </body>
 </html>

@@ -19,11 +19,3 @@
 | ML Model     | Scikit-learn / TensorFlow           |
 | Visualization| Chart.js / D3.js                    |
 | Deployment   | Vercel / Render / Heroku            |
-
-## 📦 Installation
-
-```bash
-git clone https://github.com/your-username/weatherwise.git
-cd weatherwise
-pip install -r requirements.txt
-python app.py
